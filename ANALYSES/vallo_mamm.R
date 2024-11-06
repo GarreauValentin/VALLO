@@ -6,7 +6,7 @@ library(readxl)
 library(dplyr)
 library(reshape2)
 library(tidyr)
-library(GUniFrac)
+library(vegan)
 
 #Import des données 
 #Data externe 
@@ -14,14 +14,25 @@ extdata <- read.table(file = "extdata_mamm.tsv", sep = "\t", header=T)
 #Table OTUs
 data_mamm_R2_freq <- read.table(file = "merge_otu_taxo_mammR2freq.csv", header = TRUE, sep = ",", row.names = "X")
 
-#formarrage donnéés
+#formattage donnéés
 data_mamm_R2_freq <- subset(data_mamm_R2_freq, Phylum != "")
+data_mamm_div <- data_mamm_R2_freq
+data_mamm_div <- data_mamm_div[, !names(data_mamm_div) %in% c("ETEX_BHUM", "ETF_BHUM","STEX1_BHUM")]
+data_mamm_div$sum_1 <- rowSums(data_mamm_div[, grep("1", names(data_mamm_div))])
+data_mamm_div$sum_2 <- rowSums(data_mamm_div[, grep("2", names(data_mamm_div))])
+data_mamm_div$sum_3 <- rowSums(data_mamm_div[, grep("3", names(data_mamm_div))])
+data_mamm_div$sum_4 <- rowSums(data_mamm_div[, grep("4", names(data_mamm_div))])
+data_mamm_div <- data_mamm_div[, 33:ncol(data_mamm_div)]
+# Calculer la somme des colonnes sum_1, sum_2, sum_3, sum_4 pour chaque ligne
+#sum_values <- rowSums(data_mamm_div[, c("sum_1", "sum_2", "sum_3", "sum_4")], na.rm = TRUE)
+#new_row <- colSums(data_mamm_div[, c("sum_1", "sum_2", "sum_3", "sum_4")], na.rm = TRUE)
+#data_mamm_div <- rbind(data_mamm_div, c(NA, NA, NA, NA, NA, NA, new_row))
+#rownames(data_mamm_div)[nrow(data_mamm_div)] <- "sum_asv"
 
-
-#RAREFACTION 
+#AUTRES
 colnames(data_mamm_R2_freq)
-echeau <- c(1:12,25:28)
-echsed <- c(13:24,29:32)
+echeau <- c(1:12,28:31)
+echsed <- c(15:26,32:35)
 tabeau <- colSums(data_mamm_R2_freq[,echeau])
 tabsed <- colSums(data_mamm_R2_freq[,echsed])
 summary(tabeau)
@@ -34,10 +45,9 @@ var.test(tabeau, tabsed)
 t.test(tabeau, tabsed)
 wilcox.test(tabeau, tabsed)
 
+#RAREFACTION 
+rarefied_table_mamm <- rrarefy(data_mamm_div[,7:10], 94939)
 
-result_mamm_R2_freq <- rrarefy(data_mamm_R2_freq[,echeau], 12170)
-summary(result_plant_R2_freq[,echeau])
-str(result_plant_R2_freq)
 #MAMM_R2_freq
 # Initialiser un tableau vide pour stocker le résultat
 result_mamm_R2_freq <- data.frame()
@@ -70,4 +80,3 @@ ggplot(data = result_mamm_R2_freq, aes(x = Altitude_.m., y = Species)) +
   geom_point() + # You can add a layer, for example, points
   labs(x = "Altitude (m)", y = "Species", title = "Species vs Altitude") +
   theme_minimal()
-
